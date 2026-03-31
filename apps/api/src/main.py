@@ -1,8 +1,3 @@
-from fastapi import FastAPI
+from negansurance import create_app
 
-app = FastAPI()
-
-
-@app.get("/")
-def read_root():
-    return { "hello": "world" }
+app = create_app()
