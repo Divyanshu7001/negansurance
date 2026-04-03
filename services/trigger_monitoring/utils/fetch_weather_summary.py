@@ -9,7 +9,7 @@ import requests
 from requests.exceptions import ReadTimeout
 from dotenv import load_dotenv
 
-from utils.fetch_location_coordinates import get_lat_lon
+from .fetch_location_coordinates import get_lat_lon
 
 load_dotenv()
 
@@ -115,7 +115,6 @@ def _fetch_weather_summary(location: str, date: str, time: str) -> WeatherSummar
     # 1) Compute how many hours back from now the requested time is.
     now_utc = datetime.now(timezone.utc)
     target_dt = _parse_utc(date, time)
-    print(target_dt)
 
     if target_dt is None or target_dt > now_utc:
         # Fallback: if parsing fails or time is in the future, just use 6 hours.
@@ -230,11 +229,6 @@ def _fetch_weather_summary(location: str, date: str, time: str) -> WeatherSummar
     data["_computedSummary"]["anchor_start_time"] = time
     data["_computedSummary"]["rain_duration_hours_from_anchor"] = rain_duration_hours
     data["_computedSummary"]["rain_total_mm_from_anchor"] = total_rain_mm
-
-    print(WeatherSummary(
-        did_rain=did_rain,
-        heat_wave=heat_wave_today,
-        flood=flood))
     return WeatherSummary(
         did_rain=did_rain,
         heat_wave=heat_wave_today,
@@ -242,7 +236,8 @@ def _fetch_weather_summary(location: str, date: str, time: str) -> WeatherSummar
     )
 
 
-sample_location = "Bangaluru, Karnataka"
-sample_date = "2026-04-01"
-sample_time = "18:00"
-_fetch_weather_summary(sample_location, sample_date, sample_time)
+if __name__ == "__main__":
+    sample_location = "Bangaluru, Karnataka"
+    sample_date = "2026-04-01"
+    sample_time = "18:00"
+    print(_fetch_weather_summary(sample_location, sample_date, sample_time))
