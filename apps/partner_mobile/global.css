@@ -1,0 +1,269 @@
+@import "tailwindcss/theme.css" layer(theme);
+@import "tailwindcss/preflight.css" layer(base);
+@import "tailwindcss/utilities.css";
+
+@import "nativewind/theme";
+
+/* Empathetic Guardian — Stitch parity tokens (Tailwind v4 CSS-first) */
+@theme {
+  /* ---------- Colors (Light) ---------- */
+  --color-primary: #753eb5;
+  --color-primary-container: #bd87ff;
+  --color-primary-fixed: #bd87ff;
+  --color-primary-fixed-dim: #b079f3;
+  --color-primary-dim: #6830a8;
+
+  --color-on-primary: #faefff;
+  --color-on-primary-container: #340064;
+  --color-on-primary-fixed: #000000;
+  --color-on-primary-fixed-variant: #41007a;
+
+  --color-secondary: #006b25;
+  --color-secondary-container: #67f67d;
+  --color-secondary-fixed: #67f67d;
+  --color-secondary-fixed-dim: #58e770;
+  --color-secondary-dim: #005d1f;
+
+  --color-on-secondary: #d0ffcc;
+  --color-on-secondary-container: #00591d;
+  --color-on-secondary-fixed: #004414;
+  --color-on-secondary-fixed-variant: #006422;
+
+  --color-tertiary: #785500;
+  --color-tertiary-container: #feb700;
+  --color-tertiary-fixed: #feb700;
+  --color-tertiary-fixed-dim: #ecaa00;
+  --color-tertiary-dim: #694a00;
+
+  --color-on-tertiary: #fff1de;
+  --color-on-tertiary-container: #533a00;
+  --color-on-tertiary-fixed: #392700;
+  --color-on-tertiary-fixed-variant: #5f4200;
+
+  --color-error: #b41340;
+  --color-error-dim: #a70138;
+  --color-error-container: #f74b6d;
+
+  --color-on-error: #ffefef;
+  --color-on-error-container: #510017;
+
+  --color-background: #fff3fe;
+  --color-on-background: #3d2549;
+
+  --color-surface: #fff3fe;
+  --color-surface-bright: #fff3fe;
+  --color-surface-dim: #efc6ff;
+  --color-surface-tint: #753eb5;
+  --color-surface-variant: #f3d1ff;
+
+  --color-surface-container-lowest: #ffffff;
+  --color-surface-container-low: #fdebff;
+  --color-surface-container: #f9e0ff;
+  --color-surface-container-high: #f6d9ff;
+  --color-surface-container-highest: #f3d1ff;
+
+  --color-on-surface: #3d2549;
+  --color-on-surface-variant: #6c5279;
+
+  --color-outline: #896d95;
+  --color-outline-variant: #c2a2ce;
+
+  --color-inverse-surface: #1a0426;
+  --color-inverse-primary: #bb83ff;
+  --color-inverse-on-surface: #b192bd;
+
+  /* ---------- Typography (Stitch) ---------- */
+  /* Note: these names must match the actual fonts you load in Expo */
+  --font-headline: "Manrope_800ExtraBold";
+  --font-body: "Inter_400Regular";
+  --font-label: "Inter_600SemiBold";
+  --font-sans: var(--font-body);
+
+  /* Optional semantic type scales used in Stitch screens */
+  --text-label-md: 0.75rem;
+  --leading-label-md: 1rem;
+
+  --text-body-md: 0.875rem;
+  --leading-body-md: 1.25rem;
+
+  --text-title-md: 1rem;
+  --leading-title-md: 1.4rem;
+
+  --text-headline-lg: 2rem;
+  --leading-headline-lg: 2.4rem;
+
+  /* ---------- Shape ---------- */
+  --radius: 1rem;
+  --radius-md: 1.5rem;
+  --radius-lg: 2rem;
+  --radius-xl: 3rem;
+  --radius-full: 9999px;
+
+  /* ---------- Depth ---------- */
+  --shadow-ambient: 0 40px 40px rgb(61 37 73 / 0.06);
+  --shadow-ambient-soft: 0 40px 40px rgb(61 37 73 / 0.04);
+
+  /* ---------- Motion ---------- */
+  --ease-viscous: cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+@layer base {
+  :root {
+    color-scheme: light;
+    color: var(--color-on-surface);
+    background: var(--color-surface);
+    font-family: var(--font-body);
+  }
+
+  /* Manual web toggle parity with Stitch HTML (<html class="dark">) */
+  .dark {
+    color-scheme: dark;
+
+    /* ---------- Colors (Dark) ---------- */
+    --color-primary: #c799ff;
+    --color-primary-container: #bd87ff;
+    --color-primary-fixed: #bd87ff;
+    --color-primary-fixed-dim: #af7af0;
+    --color-primary-dim: #ba84fc;
+
+    --color-on-primary: #440080;
+    --color-on-primary-container: #340064;
+    --color-on-primary-fixed: #000000;
+    --color-on-primary-fixed-variant: #41007a;
+
+    --color-secondary: #d793fa;
+    --color-secondary-container: #672889;
+    --color-secondary-fixed: #edc2ff;
+    --color-secondary-fixed-dim: #e6b0ff;
+    --color-secondary-dim: #c986eb;
+
+    --color-on-secondary: #4c056e;
+    --color-on-secondary-container: #edc1ff;
+    --color-on-secondary-fixed: #531074;
+    --color-on-secondary-fixed-variant: #723493;
+
+    --color-tertiary: #ff94a4;
+    --color-tertiary-container: #fd7e94;
+    --color-tertiary-fixed: #ff90a1;
+    --color-tertiary-fixed-dim: #fa7c91;
+    --color-tertiary-dim: #f3778c;
+
+    --color-on-tertiary: #680826;
+    --color-on-tertiary-container: #56001c;
+    --color-on-tertiary-fixed: #390010;
+    --color-on-tertiary-fixed-variant: #71112c;
+
+    --color-error: #ff6e84;
+    --color-error-dim: #d73357;
+    --color-error-container: #a70138;
+
+    --color-on-error: #490013;
+    --color-on-error-container: #ffb2b9;
+
+    --color-background: #130b1a;
+    --color-on-background: #f6e6fd;
+
+    --color-surface: #130b1a;
+    --color-surface-bright: #34273f;
+    --color-surface-dim: #130b1a;
+    --color-surface-tint: #c799ff;
+    --color-surface-variant: #2d2137;
+
+    --color-surface-container-lowest: #000000;
+    --color-surface-container-low: #190f21;
+    --color-surface-container: #201528;
+    --color-surface-container-high: #261b30;
+    --color-surface-container-highest: #2d2137;
+
+    --color-on-surface: #f6e6fd;
+    --color-on-surface-variant: #b4a6bc;
+
+    --color-outline: #7d7185;
+    --color-outline-variant: #4f4456;
+
+    --color-inverse-surface: #fff7fd;
+    --color-inverse-primary: #7843b7;
+    --color-inverse-on-surface: #5c5164;
+
+    /* Fonts: Stitch dark uses Manrope everywhere */
+    --font-body: "Manrope_400Regular";
+    --font-label: "Manrope_600SemiBold";
+    --font-sans: var(--font-body);
+  }
+
+  /* Automatic web dark mode (no manual class required) */
+  @media (prefers-color-scheme: dark) {
+    :root {
+      color-scheme: dark;
+
+      --color-primary: #c799ff;
+      --color-primary-container: #bd87ff;
+      --color-primary-fixed: #bd87ff;
+      --color-primary-fixed-dim: #af7af0;
+      --color-primary-dim: #ba84fc;
+
+      --color-on-primary: #440080;
+      --color-on-primary-container: #340064;
+      --color-on-primary-fixed: #000000;
+      --color-on-primary-fixed-variant: #41007a;
+
+      --color-secondary: #d793fa;
+      --color-secondary-container: #672889;
+      --color-secondary-fixed: #edc2ff;
+      --color-secondary-fixed-dim: #e6b0ff;
+      --color-secondary-dim: #c986eb;
+
+      --color-on-secondary: #4c056e;
+      --color-on-secondary-container: #edc1ff;
+      --color-on-secondary-fixed: #531074;
+      --color-on-secondary-fixed-variant: #723493;
+
+      --color-tertiary: #ff94a4;
+      --color-tertiary-container: #fd7e94;
+      --color-tertiary-fixed: #ff90a1;
+      --color-tertiary-fixed-dim: #fa7c91;
+      --color-tertiary-dim: #f3778c;
+
+      --color-on-tertiary: #680826;
+      --color-on-tertiary-container: #56001c;
+      --color-on-tertiary-fixed: #390010;
+      --color-on-tertiary-fixed-variant: #71112c;
+
+      --color-error: #ff6e84;
+      --color-error-dim: #d73357;
+      --color-error-container: #a70138;
+
+      --color-on-error: #490013;
+      --color-on-error-container: #ffb2b9;
+
+      --color-background: #130b1a;
+      --color-on-background: #f6e6fd;
+
+      --color-surface: #130b1a;
+      --color-surface-bright: #34273f;
+      --color-surface-dim: #130b1a;
+      --color-surface-tint: #c799ff;
+      --color-surface-variant: #2d2137;
+
+      --color-surface-container-lowest: #000000;
+      --color-surface-container-low: #190f21;
+      --color-surface-container: #201528;
+      --color-surface-container-high: #261b30;
+      --color-surface-container-highest: #2d2137;
+
+      --color-on-surface: #f6e6fd;
+      --color-on-surface-variant: #b4a6bc;
+
+      --color-outline: #7d7185;
+      --color-outline-variant: #4f4456;
+
+      --color-inverse-surface: #fff7fd;
+      --color-inverse-primary: #7843b7;
+      --color-inverse-on-surface: #5c5164;
+
+      --font-body: "Manrope_400Regular";
+      --font-label: "Manrope_600SemiBold";
+      --font-sans: var(--font-body);
+    }
+  }
+}
