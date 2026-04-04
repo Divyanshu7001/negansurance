@@ -20,6 +20,10 @@ function buildUnsafeMetadata(
       firstName: state.firstName,
       lastName: state.lastName,
       emailAddress: state.emailAddress,
+      phone: {
+        countryCode: state.countryCode,
+        nationalNumber: state.phoneNationalNumber,
+      },
     },
   };
 }
@@ -28,11 +32,10 @@ function emptyOtpDigits() {
   return Array.from({ length: 6 }, () => "");
 }
 
-export default function VerifyPhonePage() {
+export default function VerifyEmailPage() {
   const { signUp, errors, fetchStatus } = useSignUp();
   const router = useRouter();
-  const { state, setState, phoneE164, setOtpDigit, clearOtp } =
-    useRegistration();
+  const { state, setState, phoneE164, setOtpDigit } = useRegistration();
 
   const getResultError = (result: unknown) => {
     if (!result || typeof result !== "object") return null;
@@ -57,10 +60,10 @@ export default function VerifyPhonePage() {
 
   React.useEffect(() => {
     // If user switches between email/phone verification, reset OTP state.
-    if (state.verificationMethod !== "phone") {
+    if (state.verificationMethod !== "email") {
       setState((s) => ({
         ...s,
-        verificationMethod: "phone",
+        verificationMethod: "email",
         otpSent: false,
         resendAvailableAt: null,
         otpDigits: emptyOtpDigits(),
@@ -98,8 +101,80 @@ export default function VerifyPhonePage() {
       lastName: state.lastName || undefined,
       unsafeMetadata: buildUnsafeMetadata(state),
     };
+    console.log(params);
+    console.log(signUp);
+    
+    if (!signUp.id) {
+      console.log("Creating new signup");
+      await signUp.create(params);
+    } else {
+      console.log("Signup already exists, skipping create");
+      // ❌ DO NOT call signUp.create again
+    }
+  };
 
-    await signUp.create(params);
+  const sendEmailCodeCompat = async () => {
+    // Prefer the newer verifications API, but fall back to classic methods.
+    const anySignUp = signUp as any;
+    const verifications = anySignUp?.verifications;
+
+    if (typeof verifications?.sendEmailCode === "function") {
+      try {
+        return await verifications.sendEmailCode();
+      } catch (error) {
+        console.error("Error sending email code:", error);
+        throw error;
+      }
+    }
+
+    if (typeof verifications?.prepareEmailAddressVerification === "function") {
+      try {
+        return await verifications.prepareEmailAddressVerification({
+          strategy: "email_code",
+        } as any);
+      } catch (error) {
+        console.error("Error preparing email address verification:", error);
+        throw error;
+      }
+    }
+
+    if (typeof anySignUp?.prepareEmailAddressVerification === "function") {
+      try {
+        return await anySignUp.prepareEmailAddressVerification({
+          strategy: "email_code",
+        } as any);
+      } catch (error) {
+        console.error("Error preparing email address verification:", error);
+        throw error;
+      }
+    }
+
+    throw new Error(
+      "Email verification is not supported by this Clerk SDK version.",
+    );
+  };
+
+  const verifyEmailCodeCompat = async (code: string) => {
+    const anySignUp = signUp as any;
+    const verifications = anySignUp?.verifications;
+
+    if (typeof verifications?.verifyEmailCode === "function") {
+      return await verifications.verifyEmailCode({ code });
+    }
+
+    if (typeof verifications?.attemptEmailAddressVerification === "function") {
+      return await verifications.attemptEmailAddressVerification({
+        code,
+      } as any);
+    }
+
+    if (typeof anySignUp?.attemptEmailAddressVerification === "function") {
+      return await anySignUp.attemptEmailAddressVerification({ code } as any);
+    }
+
+    throw new Error(
+      "Email verification is not supported by this Clerk SDK version.",
+    );
   };
 
   const sendCode = async () => {
@@ -116,23 +191,21 @@ export default function VerifyPhonePage() {
     }
 
     setBusy(true);
-
     try {
       await ensureSignUpInitialized();
-
-      const result = await signUp.verifications.sendPhoneCode({
-        channel: "sms",
-      });
-      console.log("Result after sending: ", result);
-
+      console.log("after ensuring");
+      
+      const result = await sendEmailCodeCompat();
+      //console.log("Result after sending: ",result);
+      
       const err = getResultError(result);
       if (err) throw err;
 
-      clearOtp();
       setState((s) => ({
         ...s,
         otpSent: true,
         resendAvailableAt: Date.now() + 30_000,
+        otpDigits: emptyOtpDigits(),
       }));
     } catch (e: any) {
       setFormError(getErrorMessage(e, "Failed to send code."));
@@ -152,9 +225,7 @@ export default function VerifyPhonePage() {
 
     setBusy(true);
     try {
-      const result = await signUp.verifications.verifyPhoneCode({
-        code,
-      } as any);
+      const result = await verifyEmailCodeCompat(code);
       const err = getResultError(result);
       if (err) throw err;
       router.push("/sign-up/account-setup" as Href);
@@ -165,21 +236,29 @@ export default function VerifyPhonePage() {
     }
   };
 
-  //console.log(state.phoneNationalNumber);
-  console.log("OTP send value: ", state.otpSent);
-
   return (
     <View className="flex-1 bg-surface px-6 pt-16">
-      <View className="mb-8 flex-row items-center gap-3">
+      <View className="mb-8 flex-row items-center justify-between">
+        <View className="flex-row items-center gap-3">
+          <Pressable
+            onPress={() => router.back()}
+            className="h-10 w-10 items-center justify-center rounded-full"
+          >
+            <MaterialIcons name="arrow-back" size={22} color="#753eb5" />
+          </Pressable>
+          <Text className="font-headline text-xl tracking-tight text-primary">
+            Email Verification
+          </Text>
+        </View>
+
         <Pressable
-          onPress={() => router.back()}
-          className="h-10 w-10 items-center justify-center rounded-full"
+          onPress={() => router.push("/sign-up/verify-phone" as Href)}
+          className="rounded-full px-3 py-2"
         >
-          <MaterialIcons name="arrow-back" size={22} color="#753eb5" />
+          <Text className="text-xs font-semibold uppercase tracking-widest text-primary">
+            Verify with mobile
+          </Text>
         </Pressable>
-        <Text className="font-headline text-xl tracking-tight text-primary">
-          Mobile Verification
-        </Text>
       </View>
 
       <View className="mb-6">
@@ -188,7 +267,7 @@ export default function VerifyPhonePage() {
             Step 2 of 3
           </Text>
           <Text className="text-xs font-medium text-on-surface-variant">
-            Verify your number
+            Verify your email
           </Text>
         </View>
         <View className="h-1.5 w-full flex-row overflow-hidden rounded-full bg-outline-variant/30">
@@ -202,11 +281,11 @@ export default function VerifyPhonePage() {
       </View>
 
       <Text className="mb-2 font-headline text-3xl tracking-tight text-on-background">
-        Verify your phone
+        Verify your email
       </Text>
       <Text className="mb-8 font-body text-on-surface-variant">
-        We&apos;ll send a one-time code to confirm your mobile number. Please
-        also provide your email address for your account.
+        We&apos;ll send a one-time code to confirm your email address.
+        We&apos;ll also collect your mobile number for your account.
       </Text>
 
       <View className="gap-4">
@@ -222,7 +301,6 @@ export default function VerifyPhonePage() {
             autoCorrect={false}
           />
         </View>
-
         {fieldErrors?.emailAddress?.message ? (
           <Text className="text-sm text-error">
             {fieldErrors.emailAddress.message}
@@ -252,13 +330,12 @@ export default function VerifyPhonePage() {
                 setState((s) => ({ ...s, phoneNationalNumber: v }))
               }
               className="font-body text-on-surface"
-              placeholder="Phone number"
+              placeholder="Mobile number"
               placeholderTextColor="#896d95"
               keyboardType="phone-pad"
             />
           </View>
         </View>
-
         {fieldErrors?.phoneNumber?.message ? (
           <Text className="text-sm text-error">
             {fieldErrors.phoneNumber.message}
@@ -276,7 +353,7 @@ export default function VerifyPhonePage() {
               : ""
           }`}
         >
-          <MaterialIcons name="sms" size={18} color="#faefff" />
+          <MaterialIcons name="email" size={18} color="#faefff" />
           <Text className="font-headline text-lg text-on-primary">
             {state.otpSent
               ? canResend

@@ -7,6 +7,8 @@ import { Stack } from "expo-router";
 import * as SplashScreen from "expo-splash-screen";
 import React from "react";
 
+import { patchClerkFetchJson } from "@/lib/patchClerkFetchJson";
+
 import {
   Inter_400Regular,
   Inter_500Medium,
@@ -20,6 +22,8 @@ import {
 } from "@expo-google-fonts/manrope";
 
 SplashScreen.preventAutoHideAsync();
+
+patchClerkFetchJson();
 
 export default function RootLayout() {
   const publishableKey = process.env.EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY;

@@ -4,6 +4,7 @@ import { type Href, useRouter } from "expo-router";
 import React from "react";
 import { Pressable, Text, TextInput, View } from "react-native";
 
+import { TermsAndConditionsModal } from "@/components/TermsAndConditionsModal";
 import { useRegistration } from "@/context/registration-context";
 
 function buildUnsafeMetadata(
@@ -32,6 +33,25 @@ export default function AccountSetupPage() {
   const { signUp, errors, fetchStatus } = useSignUp();
   const router = useRouter();
   const { state, setState, phoneE164 } = useRegistration();
+
+  const [termsOpen, setTermsOpen] = React.useState(false);
+
+  const getResultError = (result: unknown) => {
+    if (!result || typeof result !== "object") return null;
+    if (!("error" in result)) return null;
+    return (result as any).error ?? null;
+  };
+
+  const getErrorMessage = (e: unknown, fallback: string) => {
+    const anyErr = e as any;
+    const fromClerk =
+      anyErr?.errors?.[0]?.longMessage ??
+      anyErr?.errors?.[0]?.message ??
+      anyErr?.errors?.[0]?.shortMessage;
+    const fromMessage =
+      typeof anyErr?.message === "string" ? anyErr.message : null;
+    return (fromClerk || fromMessage || fallback) as string;
+  };
 
   const [busy, setBusy] = React.useState(false);
   const [formError, setFormError] = React.useState<string | null>(null);
@@ -73,27 +93,33 @@ export default function AccountSetupPage() {
 
     setBusy(true);
     try {
-      const { error: updateError } = await signUp.update({
+      await signUp.update({
         unsafeMetadata: buildUnsafeMetadata(state),
         legalAccepted: true,
       });
-      if (updateError) {
-        throw updateError;
-      }
+      console.log("Are we even here?");
+      //console.log(updateResult);
 
-      const { error: passwordError } = await signUp.password({
+      // const updateError = getResultError(updateResult);
+      // if (updateError) throw updateError;
+      console.log("before password result");
+
+      const passwordResult = await signUp.password({
         password: state.password,
         phoneNumber: signUp.phoneNumber ?? phoneE164,
         emailAddress: state.emailAddress || undefined,
         firstName: state.firstName || undefined,
         lastName: state.lastName || undefined,
       });
-      if (passwordError) {
-        throw passwordError;
-      }
+      console.log(passwordResult);
+
+      console.log("After signup password setting");
+
+      const passwordError = getResultError(passwordResult);
+      if (passwordError) throw passwordError;
 
       if (signUp.status === "complete") {
-        const { error: finalizeError } = await signUp.finalize({
+        const finalizeResult = await signUp.finalize({
           navigate: ({ session, decorateUrl }) => {
             if (session?.currentTask) {
               console.log(session.currentTask);
@@ -103,21 +129,19 @@ export default function AccountSetupPage() {
             navigateToHome(decorateUrl);
           },
         });
+        console.log("Here before finalizing");
 
-        if (finalizeError) {
-          throw finalizeError;
-        }
+        const finalizeError = getResultError(finalizeResult);
+        if (finalizeError) throw finalizeError;
       } else {
         setFormError(
           "Sign-up is not complete yet. Please review your details.",
         );
       }
     } catch (e: any) {
-      const message =
-        typeof e?.message === "string"
-          ? e.message
-          : "Failed to complete sign-up.";
-      setFormError(message);
+      console.log("Error in completing sign up: ", e);
+
+      setFormError(getErrorMessage(e, "Failed to complete sign-up."));
     } finally {
       setBusy(false);
     }
@@ -190,13 +214,14 @@ export default function AccountSetupPage() {
           />
         </View>
 
-        <Pressable
-          onPress={() =>
-            setState((s) => ({ ...s, acceptedTerms: !s.acceptedTerms }))
-          }
-          className="mt-2 flex-row items-start gap-4 rounded-xl p-4"
-        >
-          <View
+        <View className="mt-2 flex-row items-start gap-4 rounded-xl p-4">
+          <Pressable
+            onPress={() =>
+              setState((s) => ({ ...s, acceptedTerms: !s.acceptedTerms }))
+            }
+            accessibilityRole="checkbox"
+            accessibilityLabel="Accept terms and conditions"
+            accessibilityState={{ checked: state.acceptedTerms }}
             className={`mt-1 h-6 w-6 items-center justify-center rounded-md border-2 ${
               state.acceptedTerms
                 ? "border-primary bg-primary"
@@ -206,11 +231,24 @@ export default function AccountSetupPage() {
             {state.acceptedTerms ? (
               <MaterialIcons name="check" size={16} color="#ffffff" />
             ) : null}
-          </View>
+          </Pressable>
+
           <Text className="flex-1 font-body text-sm leading-relaxed text-on-surface-variant">
-            I agree to the Terms of Service and Privacy Policy.
+            I agree to the{" "}
+            <Text
+              onPress={() => setTermsOpen(true)}
+              suppressHighlighting
+              className={`font-body ${
+                state.acceptedTerms
+                  ? "font-bold text-primary underline"
+                  : "text-primary underline"
+              }`}
+            >
+              Terms &amp; Conditions
+            </Text>{" "}
+            and Privacy Policy.
           </Text>
-        </Pressable>
+        </View>
 
         {formError ? (
           <Text className="text-sm text-error">{formError}</Text>
@@ -231,6 +269,15 @@ export default function AccountSetupPage() {
       </View>
 
       <View className="mt-10" nativeID="clerk-captcha" />
+
+      <TermsAndConditionsModal
+        visible={termsOpen}
+        onClose={() => setTermsOpen(false)}
+        onAccept={() => {
+          setState((s) => ({ ...s, acceptedTerms: true }));
+          setTermsOpen(false);
+        }}
+      />
     </View>
   );
 }

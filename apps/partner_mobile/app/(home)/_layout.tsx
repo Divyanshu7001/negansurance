@@ -145,6 +145,12 @@ export default function HomeRoutesLayout() {
     <Stack screenOptions={{ headerShown: false }}>
       <Stack.Screen name="(tabs)" />
       <Stack.Screen name="coming-soon" />
+      <Stack.Screen name="policy-details" />
+      <Stack.Screen name="report-incident" />
+      <Stack.Screen name="profile/personal-details" />
+      <Stack.Screen name="profile/change-password" />
+      <Stack.Screen name="profile/delete-account" />
+      <Stack.Screen name="profile/logout-all-devices" />
     </Stack>
   );
 }

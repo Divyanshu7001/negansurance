@@ -14,7 +14,10 @@ import {
   View,
 } from "react-native";
 
-import { type PartnerPlatform, useRegistration } from "@/context/registration-context";
+import {
+  type PartnerPlatform,
+  useRegistration,
+} from "@/context/registration-context";
 
 const LIGHT_PRIMARY = "#753eb5";
 const DARK_PRIMARY = "#c799ff";
@@ -57,7 +60,7 @@ export default function RegistrationStep1() {
   const primary = isDark ? DARK_PRIMARY : LIGHT_PRIMARY;
 
   const handleContinue = () => {
-    router.push("/sign-up/verify-phone" as Href);
+    router.push("/sign-up/verify-email" as Href);
   };
 
   return (

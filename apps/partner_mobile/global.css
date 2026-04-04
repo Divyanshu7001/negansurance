@@ -1,11 +1,9 @@
-@import "tailwindcss/theme.css" layer(theme);
-@import "tailwindcss/preflight.css" layer(base);
-@import "tailwindcss/utilities.css";
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
 
-@import "nativewind/theme";
-
-/* Empathetic Guardian — Stitch parity tokens (Tailwind v4 CSS-first) */
-@theme {
+/* Empathetic Guardian — Stitch parity tokens (CSS variables) */
+:root {
   /* ---------- Colors (Light) ---------- */
   --color-primary: #753eb5;
   --color-primary-container: #bd87ff;

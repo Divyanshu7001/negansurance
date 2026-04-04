@@ -38,6 +38,79 @@ function LightDashboard() {
   const go = (title: string) =>
     router.push({ pathname: "/coming-soon", params: { title } });
 
+  const openActiveSmartPlan = () => {
+    router.push({
+      pathname: "/policy-details",
+      params: {
+        heroTitle: "Policy Details",
+        planTitle: "Your Smart Plan",
+        policyId: "NE-8829-XP",
+        statusLabel: "Active",
+        isActive: "true",
+        rateLabel: "Rate",
+        rateValue: "$0.12",
+        rateUnit: "/mile",
+        rateChip: "BEST VALUE",
+        coveragePreset: "smart",
+        coverageTitle: "Coverage",
+        coverageBadge: "YOUR PROTECTION",
+        showWeekly: "true",
+        activeMiles: "351.5 miles",
+        baseAccess: "$23.00",
+        multiplier: "1.1x",
+        currentBill: "$42.18",
+        monthTotal: "$42.18 Total",
+        milesDriven: "351.5 mi",
+      },
+    });
+  };
+
+  const openSuggestedSmartPlan = () => {
+    router.push({
+      pathname: "/policy-details",
+      params: {
+        heroTitle: "Policy Details",
+        planTitle: "Smart Plan",
+        policyId: "NE-8829-XP",
+        statusLabel: "Suggested",
+        isActive: "false",
+        rateLabel: "Rate",
+        rateValue: "$0.12",
+        rateUnit: "/mile",
+        rateChip: "POPULAR",
+        coveragePreset: "smart",
+        coverageTitle: "Coverage",
+        coverageBadge: "YOUR PROTECTION",
+        showWeekly: "false",
+        monthTotal: "$0.00 Total",
+        milesDriven: "0.0 mi",
+      },
+    });
+  };
+
+  const openSuggestedCompletePlan = () => {
+    router.push({
+      pathname: "/policy-details",
+      params: {
+        heroTitle: "Policy Details",
+        planTitle: "Complete Protection",
+        policyId: "NE-8829-XP",
+        statusLabel: "Suggested",
+        isActive: "false",
+        rateLabel: "Monthly",
+        rateValue: "$45",
+        rateUnit: "/mo",
+        rateChip: "FIXED",
+        coveragePreset: "complete",
+        coverageTitle: "Coverage",
+        coverageBadge: "FIXED PLAN",
+        showWeekly: "false",
+        monthTotal: "$45.00 Total",
+        milesDriven: "—",
+      },
+    });
+  };
+
   return (
     <View className="flex-1">
       <LightTopBar onMenu={() => go("Menu")} onAvatar={() => go("Profile")} />
@@ -112,7 +185,7 @@ function LightDashboard() {
         </View>
 
         <Pressable
-          onPress={() => go("Report Incident")}
+          onPress={() => router.push("/report-incident")}
           className="mb-10 flex-row items-center justify-between rounded-lg bg-error-container p-5"
         >
           <View className="flex-row items-center gap-4">
@@ -130,6 +203,108 @@ function LightDashboard() {
           </View>
           <MaterialIcons name="chevron-right" size={22} color="#510017" />
         </Pressable>
+
+        <Pressable
+          onPress={openActiveSmartPlan}
+          className="mb-10 overflow-hidden rounded-xl bg-surface-container-lowest p-6 shadow-2xl shadow-black/5"
+          accessibilityRole="button"
+          accessibilityLabel="View active plan"
+        >
+          <View className="mb-4 flex-row items-center justify-between">
+            <View className="flex-row items-center gap-3">
+              <View className="h-10 w-10 items-center justify-center rounded-full bg-primary-container/30">
+                <MaterialCommunityIcons
+                  name="star-four-points"
+                  size={18}
+                  color={LIGHT_PRIMARY}
+                />
+              </View>
+              <View>
+                <Text className="font-headline text-lg font-extrabold text-on-surface">
+                  Smart Plan
+                </Text>
+                <Text className="mt-0.5 text-xs font-semibold text-on-surface-variant">
+                  Active coverage
+                </Text>
+              </View>
+            </View>
+
+            <View className="rounded-full bg-primary/10 px-4 py-2">
+              <Text className="text-[10px] font-extrabold uppercase tracking-widest text-primary">
+                Active
+              </Text>
+            </View>
+          </View>
+
+          <View className="overflow-hidden rounded-xl bg-surface-container-high p-5">
+            <View className="absolute inset-0 opacity-35">
+              <LinearGradient
+                colors={["rgba(117,62,181,0.22)", "rgba(189,135,255,0.08)"]}
+                start={{ x: 0.1, y: 0 }}
+                end={{ x: 0.9, y: 1 }}
+                style={{ flex: 1 }}
+              />
+            </View>
+
+            <View className="relative">
+              <Text className="text-xs font-extrabold uppercase tracking-widest text-on-surface-variant">
+                Current plan
+              </Text>
+              <View className="mt-3 flex-row items-end gap-1">
+                <Text className="font-headline text-4xl font-black text-primary">
+                  $129
+                </Text>
+                <Text className="mb-1 text-sm font-bold text-on-surface-variant">
+                  /mo
+                </Text>
+              </View>
+              <Text className="mt-2 text-sm font-medium text-on-surface-variant">
+                Full asset coverage & lifestyle support.
+              </Text>
+            </View>
+          </View>
+        </Pressable>
+
+        <View className="mb-10">
+          <View className="mb-6 flex-row items-baseline justify-between">
+            <View className="flex-1 pr-4">
+              <Text className="font-headline text-2xl font-extrabold text-on-surface">
+                Recent Activity
+              </Text>
+              <Text className="mt-1 text-xs font-medium text-on-surface-variant">
+                Real-time status of your active claims.
+              </Text>
+            </View>
+            <Pressable
+              onPress={() => router.push("/claims")}
+              accessibilityRole="button"
+              accessibilityLabel="See all claims"
+            >
+              <Text className="font-label text-sm font-bold text-primary">
+                See All
+              </Text>
+            </Pressable>
+          </View>
+
+          <View className="gap-4">
+            <RecentActivityCard
+              title="Hospital Visit Claim"
+              subtitle="Processing at General Medical Center"
+              amount="$420.00"
+              statusLabel="In Review"
+              statusTone="warning"
+              onPress={() => router.push("/claims")}
+            />
+            <RecentActivityCard
+              title="Legal Consultation"
+              subtitle="Completed on Oct 12, 2023"
+              amount="$1,200.00"
+              statusLabel="Paid Out"
+              statusTone="success"
+              onPress={() => router.push("/claims")}
+            />
+          </View>
+        </View>
 
         <View className="mb-10">
           <View className="mb-6 flex-row items-baseline justify-between">
@@ -184,7 +359,7 @@ function LightDashboard() {
                   </View>
 
                   <Pressable
-                    onPress={() => go("Subscribe Now")}
+                    onPress={openSuggestedSmartPlan}
                     className="items-center justify-center rounded-full bg-primary py-4"
                   >
                     <Text className="font-headline text-base font-bold text-on-primary">
@@ -222,7 +397,7 @@ function LightDashboard() {
               </View>
 
               <Pressable
-                onPress={() => go("Select Fixed Plan")}
+                onPress={openSuggestedCompletePlan}
                 className="items-center justify-center rounded-full bg-surface-container-highest py-4"
               >
                 <Text className="font-headline text-base font-bold text-primary">
@@ -298,6 +473,81 @@ function LightDashboard() {
   );
 }
 
+function RecentActivityCard({
+  title,
+  subtitle,
+  amount,
+  statusLabel,
+  statusTone,
+  onPress,
+}: {
+  title: string;
+  subtitle: string;
+  amount: string;
+  statusLabel: string;
+  statusTone: "warning" | "success";
+  onPress: () => void;
+}) {
+  const pillBg =
+    statusTone === "success"
+      ? "bg-secondary-container"
+      : "bg-tertiary-container";
+  const pillText =
+    statusTone === "success"
+      ? "text-on-secondary-container"
+      : "text-on-tertiary-container";
+
+  const iconName = statusTone === "success" ? "gavel" : "medical-bag";
+  const iconBg =
+    statusTone === "success"
+      ? "bg-primary-container/20"
+      : "bg-surface-container-high";
+
+  return (
+    <Pressable
+      onPress={onPress}
+      className="overflow-hidden rounded-xl bg-surface-container-lowest p-5 shadow-2xl shadow-black/5"
+      accessibilityRole="button"
+      accessibilityLabel={`${title} ${statusLabel}`}
+    >
+      <View className="flex-row items-start justify-between gap-4">
+        <View className="flex-row items-start gap-4">
+          <View
+            className={`h-12 w-12 items-center justify-center rounded-lg ${iconBg}`}
+          >
+            <MaterialCommunityIcons
+              name={iconName}
+              size={22}
+              color={LIGHT_PRIMARY}
+            />
+          </View>
+          <View className="flex-1">
+            <Text className="font-headline text-lg font-bold text-on-surface">
+              {title}
+            </Text>
+            <Text className="mt-0.5 text-xs font-medium text-on-surface-variant">
+              {subtitle}
+            </Text>
+          </View>
+        </View>
+
+        <View className="items-end">
+          <Text className="font-headline text-base font-extrabold text-on-surface">
+            {amount}
+          </Text>
+          <View className={`mt-2 rounded-full px-3 py-1 ${pillBg}`}>
+            <Text
+              className={`text-[10px] font-extrabold uppercase tracking-widest ${pillText}`}
+            >
+              {statusLabel}
+            </Text>
+          </View>
+        </View>
+      </View>
+    </Pressable>
+  );
+}
+
 function DarkDashboard() {
   const { user } = useUser();
   const router = useRouter();
@@ -307,6 +557,24 @@ function DarkDashboard() {
 
   const go = (title: string) =>
     router.push({ pathname: "/coming-soon", params: { title } });
+
+  const openActiveSmartPlan = () => {
+    router.push({
+      pathname: "/policy-details",
+      params: {
+        planTitle: "Smart Plan",
+        policyId: "NE-8829-XP",
+        statusLabel: "Active",
+        isActive: "true",
+        rateValue: "$0.12",
+        rateUnit: "/mile",
+        monthTotal: "$42.18 Total",
+        milesDriven: "351.5 mi",
+        coverageTitle: "Dynamic Coverage",
+        coverageBadge: "REAL-TIME STATS",
+      },
+    });
+  };
 
   return (
     <View className="flex-1">
@@ -358,7 +626,12 @@ function DarkDashboard() {
           </View>
         </View>
 
-        <View className="mb-6 rounded-xl bg-primary-container p-8">
+        <Pressable
+          onPress={openActiveSmartPlan}
+          className="mb-6 rounded-xl bg-primary-container p-8"
+          accessibilityRole="button"
+          accessibilityLabel="View active plan"
+        >
           <View className="mb-6 flex-row items-start justify-between">
             <MaterialIcons name="stars" size={32} color="#340064" />
             <View className="rounded-full bg-on-primary-container/10 px-3 py-1">
@@ -383,7 +656,7 @@ function DarkDashboard() {
               /mo
             </Text>
           </View>
-        </View>
+        </Pressable>
 
         <View className="gap-4">
           <CoverageTile

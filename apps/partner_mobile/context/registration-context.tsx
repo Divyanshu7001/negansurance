@@ -23,6 +23,7 @@ type RegistrationState = {
   avgWeeklyIncome: string;
 
   // Step 2
+  verificationMethod: "email" | "phone";
   countryCode: string; // e.g. +91
   phoneNationalNumber: string; // digits only
   otpDigits: string[]; // length 6
@@ -57,13 +58,14 @@ const initialState: RegistrationState = {
   lastName: "",
   emailAddress: "",
 
-  partnerPlatform: "Swiggy",
+  partnerPlatform: "Zomato",
   operatingCity: "",
   partnerPlatformUserId: "",
   platformIdVerified: false,
   avgDailyDutyHours: "",
   avgWeeklyIncome: "",
 
+  verificationMethod: "email",
   countryCode: "+91",
   phoneNationalNumber: "",
   otpDigits: Array.from({ length: 6 }, () => ""),
