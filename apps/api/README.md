@@ -33,6 +33,15 @@ FastAPI application that orchestrates public policy, claim, trigger, payout, and
 
 Use the default API key via header `X-API-Key: local-dev-key` when hitting secured endpoints (all except `/`). Customize via `NEGANSURANCE_API_KEY` env variable.
 
+### Trigger monitoring data sources
+
+The `/triggers/active` endpoint now calls the shared collector under `services/trigger_monitoring`. Provide the following env vars (place them in the repo-level `.env`) so both the CLI script and FastAPI surface reuse the same credentials:
+
+- `DATA_GOOGLE_API_KEY` – used for Google Geocoding, Weather History, and Air Quality APIs.
+- `DATA_GROK_API_KEY` – optional, enables civic alert enrichment via Groq; if omitted, civic events default to `false`.
+
+Because the API imports that root package directly, ensure the repo is launched from its root (the provided `uvicorn ... --app-dir apps/api/src` command already does so).
+
 ## Example flow
 
 1. Request weekly premium quote: `POST /api/v1/policies/quote`.

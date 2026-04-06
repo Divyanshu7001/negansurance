@@ -1,6 +1,13 @@
 """Domain models shared across API modules."""
 
-from .claim import ClaimDecision, ClaimDecisionStatus, ClaimSubmission
+from .claim import (
+    ClaimDecision,
+    ClaimDecisionBreakdown,
+    ClaimDecisionStatus,
+    ClaimSubmission,
+    ClaimSummary,
+    ClaimUserInfo,
+)
 from .identity import KYCRequest, KYCResponse, VerificationStatus
 from .payout import PayoutInstruction, PayoutStatus
 from .policy import (
@@ -26,6 +33,9 @@ __all__ = [
     "ClaimSubmission",
     "ClaimDecision",
     "ClaimDecisionStatus",
+    "ClaimDecisionBreakdown",
+    "ClaimSummary",
+    "ClaimUserInfo",
     "TriggerEvent",
     "TriggerType",
     "PayoutInstruction",

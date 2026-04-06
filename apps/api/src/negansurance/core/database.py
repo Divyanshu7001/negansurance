@@ -132,3 +132,19 @@ async def ensure_schema(database: Database) -> None:
     await database.execute(
         "CREATE INDEX IF NOT EXISTS idx_policies_partner ON policies (partner_id)"
     )
+    await database.execute(
+        """
+        CREATE TABLE IF NOT EXISTS claims (
+            claim_id TEXT PRIMARY KEY,
+            policy_id TEXT NOT NULL,
+            partner_id TEXT NOT NULL,
+            status TEXT NOT NULL,
+            payout_amount NUMERIC NOT NULL,
+            decision_payload JSONB NOT NULL,
+            created_at TIMESTAMPTZ NOT NULL
+        )
+        """
+    )
+    await database.execute(
+        "CREATE INDEX IF NOT EXISTS idx_claims_partner ON claims (partner_id)"
+    )

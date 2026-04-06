@@ -28,7 +28,10 @@ def get_risk_pricing_service() -> RiskPricingService:
 
 @lru_cache(maxsize=1)
 def get_claim_decisioning_service() -> ClaimDecisioningService:
-    return ClaimDecisioningService(policy_service=get_policy_service())
+    return ClaimDecisioningService(
+        policy_service=get_policy_service(),
+        database=get_database(),
+    )
 
 
 @lru_cache(maxsize=1)

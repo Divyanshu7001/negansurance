@@ -54,17 +54,6 @@
                   command = pkgs.pgweb;
                   depends_on.pg1.condition = "process_healthy";
                 };
-
-              settings.processes.test = {
-                command = pkgs.writeShellApplication {
-                  name = "pg1-test";
-                  runtimeInputs = [ config.services.postgres.pg1.package ];
-                  text = ''
-                    psql -h 127.0.0.1 -c 'SELECT current_database();' ${dbName}
-                  '';
-                };
-                depends_on.pg1.condition = "process_healthy";
-              };
             };
 
           packages.default = self'.packages."postgres-stack";
