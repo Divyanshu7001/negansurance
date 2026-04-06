@@ -6,7 +6,7 @@ export type PartnerPlatform = (typeof PARTNER_PLATFORMS)[number];
 type RegistrationState = {
   // Step 1 (light)
   fullName: string;
-  profilePhotoUri: string | null;
+  // profilePhotoUri: string | null;
   photoConfirmationChecked: boolean;
 
   // Step 1 (dark)
@@ -51,7 +51,7 @@ const RegistrationContext =
 
 const initialState: RegistrationState = {
   fullName: "",
-  profilePhotoUri: null,
+  // profilePhotoUri: null,
   photoConfirmationChecked: false,
 
   firstName: "",

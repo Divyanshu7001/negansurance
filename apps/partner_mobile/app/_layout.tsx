@@ -7,6 +7,7 @@ import { Stack } from "expo-router";
 import * as SplashScreen from "expo-splash-screen";
 import React from "react";
 
+import { ServerUserProvider } from "@/context/server-user-context";
 import { patchClerkFetchJson } from "@/lib/patchClerkFetchJson";
 
 import {
@@ -54,7 +55,9 @@ export default function RootLayout() {
 
   return (
     <ClerkProvider publishableKey={publishableKey} tokenCache={tokenCache}>
-      <Stack screenOptions={{ headerShown: false }} />
+      <ServerUserProvider>
+        <Stack screenOptions={{ headerShown: false }} />
+      </ServerUserProvider>
     </ClerkProvider>
   );
 }

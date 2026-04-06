@@ -7,7 +7,8 @@ from functools import lru_cache
 from typing import List
 
 from pydantic import BaseModel, Field
-
+from dotenv import load_dotenv
+load_dotenv()
 
 class Settings(BaseModel):
     """Runtime configuration with sane defaults for local development."""
@@ -43,6 +44,7 @@ def _read_list(value: str | None) -> List[str]:
 
 def _determine_database_url() -> str:
     direct = os.getenv("DATABASE_URL")
+    print(f"Direct DATABASE_URL from env: {direct}")
     if direct:
         return direct
 

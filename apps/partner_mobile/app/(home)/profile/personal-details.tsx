@@ -1,20 +1,22 @@
-import { useUser } from "@clerk/expo";
 import { MaterialIcons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import { useMemo, useState } from "react";
 import {
-    Alert,
-    Pressable,
-    ScrollView,
-    Text,
-    TextInput,
-    useColorScheme,
-    View,
+  Alert,
+  Pressable,
+  ScrollView,
+  Text,
+  TextInput,
+  useColorScheme,
+  View,
 } from "react-native";
 import {
-    SafeAreaView,
-    useSafeAreaInsets,
+  SafeAreaView,
+  useSafeAreaInsets,
 } from "react-native-safe-area-context";
+
+import { useServerUser } from "@/context/server-user-context";
+import { updateUser, type UserRegisterRequest } from "@/lib/serverApi";
 
 type ThemeTokens = {
   primary: string;
@@ -64,28 +66,56 @@ export default function PersonalDetailsScreen() {
   const isDark = scheme === "dark";
   const colors = isDark ? DARK : LIGHT;
 
-  const { user, isLoaded } = useUser();
+  const { user, setUser, loading } = useServerUser();
 
   const initial = useMemo(() => {
     return {
-      ...splitName(user?.fullName),
-      email: user?.primaryEmailAddress?.emailAddress ?? "",
-      phone: user?.primaryPhoneNumber?.phoneNumber ?? "",
+      ...splitName(user?.full_name),
+      email: user?.email ?? "",
+      phone: user?.phone_number ?? "",
+      operatingCity: user?.operating_city ?? "",
+      dutyHoursPerWeek: String(user?.average_duty_hours_per_week ?? ""),
+      weeklyEarnings: String(user?.average_weekly_earnings ?? ""),
+      partnerName: user?.partner_name ?? "",
+      partnerPlatformId: user?.partner_platform_id ?? "",
     };
   }, [
-    user?.fullName,
-    user?.primaryEmailAddress?.emailAddress,
-    user?.primaryPhoneNumber?.phoneNumber,
+    user?.full_name,
+    user?.email,
+    user?.phone_number,
+    user?.operating_city,
+    user?.average_duty_hours_per_week,
+    user?.average_weekly_earnings,
+    user?.partner_name,
+    user?.partner_platform_id,
   ]);
 
   const [firstName, setFirstName] = useState(initial.firstName);
   const [lastName, setLastName] = useState(initial.lastName);
+  const [phone, setPhone] = useState(initial.phone);
+  const [operatingCity, setOperatingCity] = useState(initial.operatingCity);
+  const [dutyHoursPerWeek, setDutyHoursPerWeek] = useState(
+    initial.dutyHoursPerWeek,
+  );
+  const [weeklyEarnings, setWeeklyEarnings] = useState(initial.weeklyEarnings);
+  const [partnerName, setPartnerName] = useState(initial.partnerName);
+  const [partnerPlatformId, setPartnerPlatformId] = useState(
+    initial.partnerPlatformId,
+  );
   const [busy, setBusy] = useState(false);
 
-  const canSave = Boolean(firstName.trim()) && isLoaded && !busy;
+  const canSave = Boolean(firstName.trim()) && !loading && !!user && !busy;
+
+  const toInt = (value: string) => {
+    const n = Number.parseInt(value.trim(), 10);
+    return Number.isFinite(n) ? n : 0;
+  };
 
   const save = async () => {
-    if (!user) return;
+    if (!user) {
+      Alert.alert("Not ready", "User not loaded yet.");
+      return;
+    }
     if (!firstName.trim()) {
       Alert.alert("Missing name", "Please enter your first name.");
       return;
@@ -93,19 +123,24 @@ export default function PersonalDetailsScreen() {
 
     setBusy(true);
     try {
-      const anyUser = user as any;
-      if (typeof anyUser?.update === "function") {
-        await anyUser.update({
-          firstName: firstName.trim(),
-          lastName: lastName.trim(),
-        });
-      } else {
-        throw new Error(
-          "Profile updates are not supported by this Clerk SDK version.",
-        );
-      }
+      const fullName = `${firstName.trim()} ${lastName.trim()}`.trim();
 
-      Alert.alert("Saved", "Your personal details were updated.");
+      const req: UserRegisterRequest = {
+        full_name: fullName,
+        email: user.email,
+        phone_number: phone.trim(),
+        operating_city: operatingCity.trim(),
+        average_duty_hours_per_week: toInt(dutyHoursPerWeek),
+        average_weekly_earnings: toInt(weeklyEarnings),
+        partner_name: partnerName.trim(),
+        partner_platform_id: partnerPlatformId.trim(),
+        is_kyc_verified: user.is_kyc_verified,
+      };
+
+      const updated = await updateUser(user.id, req);
+      await setUser(updated);
+
+      Alert.alert("Saved", "Your profile was updated.");
       router.back();
     } catch (e: any) {
       const msg =
@@ -207,6 +242,63 @@ export default function PersonalDetailsScreen() {
             colors={colors}
           />
 
+          <View className="h-5" />
+          <Field
+            label="Phone Number"
+            value={phone}
+            onChangeText={setPhone}
+            placeholder="+911234567890"
+            colors={colors}
+            keyboardType="phone-pad"
+          />
+
+          <View className="h-5" />
+          <Field
+            label="Operating City"
+            value={operatingCity}
+            onChangeText={setOperatingCity}
+            placeholder="City"
+            colors={colors}
+          />
+
+          <View className="h-5" />
+          <Field
+            label="Avg Duty Hours / Week"
+            value={dutyHoursPerWeek}
+            onChangeText={setDutyHoursPerWeek}
+            placeholder="0"
+            colors={colors}
+            keyboardType="number-pad"
+          />
+
+          <View className="h-5" />
+          <Field
+            label="Avg Weekly Earnings"
+            value={weeklyEarnings}
+            onChangeText={setWeeklyEarnings}
+            placeholder="5000"
+            colors={colors}
+            keyboardType="number-pad"
+          />
+
+          <View className="h-5" />
+          <Field
+            label="Partner Name"
+            value={partnerName}
+            onChangeText={setPartnerName}
+            placeholder="Swiggy"
+            colors={colors}
+          />
+
+          <View className="h-5" />
+          <Field
+            label="Partner Platform ID"
+            value={partnerPlatformId}
+            onChangeText={setPartnerPlatformId}
+            placeholder="Platform user id"
+            colors={colors}
+          />
+
           <View
             className="mt-6"
             style={{ height: 1, backgroundColor: `${colors.outlineVariant}33` }}
@@ -232,13 +324,13 @@ export default function PersonalDetailsScreen() {
               className="text-[10px] font-bold uppercase tracking-wider"
               style={{ color: colors.onSurfaceVariant }}
             >
-              Phone Number
+              KYC Status
             </Text>
             <Text
               className="mt-1 font-body font-semibold"
               style={{ color: colors.onSurface }}
             >
-              {initial.phone || "—"}
+              {user?.is_kyc_verified ? "Verified" : "Not verified"}
             </Text>
           </View>
         </View>
@@ -253,12 +345,14 @@ function Field({
   onChangeText,
   placeholder,
   colors,
+  keyboardType,
 }: {
   label: string;
   value: string;
   onChangeText: (v: string) => void;
   placeholder: string;
   colors: ThemeTokens;
+  keyboardType?: "default" | "email-address" | "number-pad" | "phone-pad";
 }) {
   return (
     <View>
@@ -280,6 +374,7 @@ function Field({
           onChangeText={onChangeText}
           placeholder={placeholder}
           placeholderTextColor={`${colors.onSurfaceVariant}99`}
+          keyboardType={keyboardType}
           style={{
             flex: 1,
             color: colors.onSurface,

@@ -16,6 +16,8 @@ import {
   useSafeAreaInsets,
 } from "react-native-safe-area-context";
 
+import { useServerUser } from "@/context/server-user-context";
+
 type ThemeTokens = {
   primary: string;
   primaryContainer: string;
@@ -81,18 +83,28 @@ export default function ProfileTab() {
 
 function LightProfileSettings() {
   const router = useRouter();
-  const { user } = useUser();
+  const { user: clerkUser } = useUser();
+  const { user: serverUser } = useServerUser();
   const insets = useSafeAreaInsets();
   const [platformId, setPlatformId] = useState("ZM-492042-KS");
 
   const displayName = useMemo(
-    () => user?.fullName ?? user?.firstName ?? "Partner",
-    [user?.firstName, user?.fullName],
+    () =>
+      serverUser?.full_name ??
+      clerkUser?.fullName ??
+      clerkUser?.firstName ??
+      "Partner",
+    [serverUser?.full_name, clerkUser?.firstName, clerkUser?.fullName],
   );
   const email =
-    user?.primaryEmailAddress?.emailAddress ?? "karan.s@delivery.com";
-  const phone = user?.primaryPhoneNumber?.phoneNumber ?? "+91 98765 43210";
-  const imageUrl = user?.imageUrl;
+    serverUser?.email ??
+    clerkUser?.primaryEmailAddress?.emailAddress ??
+    "karan.s@delivery.com";
+  const phone =
+    serverUser?.phone_number ??
+    clerkUser?.primaryPhoneNumber?.phoneNumber ??
+    "+91 98765 43210";
+  const imageUrl = clerkUser?.imageUrl;
 
   const go = (
     pathname:
@@ -537,17 +549,27 @@ function LightProfileSettings() {
 
 function DarkProfileSettings() {
   const router = useRouter();
-  const { user } = useUser();
+  const { user: clerkUser } = useUser();
+  const { user: serverUser } = useServerUser();
   const insets = useSafeAreaInsets();
 
   const displayName = useMemo(
-    () => user?.fullName ?? user?.firstName ?? "Partner",
-    [user?.firstName, user?.fullName],
+    () =>
+      serverUser?.full_name ??
+      clerkUser?.fullName ??
+      clerkUser?.firstName ??
+      "Partner",
+    [serverUser?.full_name, clerkUser?.firstName, clerkUser?.fullName],
   );
   const email =
-    user?.primaryEmailAddress?.emailAddress ?? "karan.sharma@example.com";
-  const phone = user?.primaryPhoneNumber?.phoneNumber ?? "+91 98765 43210";
-  const imageUrl = user?.imageUrl;
+    serverUser?.email ??
+    clerkUser?.primaryEmailAddress?.emailAddress ??
+    "karan.sharma@example.com";
+  const phone =
+    serverUser?.phone_number ??
+    clerkUser?.primaryPhoneNumber?.phoneNumber ??
+    "+91 98765 43210";
+  const imageUrl = clerkUser?.imageUrl;
 
   const go = (
     pathname:
@@ -568,7 +590,7 @@ function DarkProfileSettings() {
         <View className="h-16 flex-row items-center justify-between">
           <View className="flex-row items-center gap-3">
             <MaterialCommunityIcons
-              name="shield-heart"
+              name="head-heart"
               size={22}
               color={DARK.primary}
             />

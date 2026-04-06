@@ -4,9 +4,11 @@ import { useRouter } from "expo-router";
 import { useState } from "react";
 import { Alert, Pressable, Text, useColorScheme, View } from "react-native";
 import {
-    SafeAreaView,
-    useSafeAreaInsets,
+  SafeAreaView,
+  useSafeAreaInsets,
 } from "react-native-safe-area-context";
+
+import { useServerUser } from "@/context/server-user-context";
 
 type ThemeTokens = {
   primary: string;
@@ -51,6 +53,7 @@ export default function LogoutAllDevicesScreen() {
   const isDark = scheme === "dark";
   const colors = isDark ? DARK : LIGHT;
   const clerk = useClerk();
+  const { clear } = useServerUser();
 
   const [busy, setBusy] = useState(false);
 
@@ -76,6 +79,8 @@ export default function LogoutAllDevicesScreen() {
                   await anyClerk.signOut();
                 }
               }
+
+              await clear();
 
               router.replace("/");
             } catch (e: any) {

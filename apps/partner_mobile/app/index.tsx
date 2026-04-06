@@ -11,6 +11,7 @@ import {
   Text,
   useColorScheme,
   View,
+  Appearance,
 } from "react-native";
 
 const LIGHT_BG_URI =
@@ -29,6 +30,7 @@ const AVATAR_3 =
 export default function IndexPage() {
   const { isLoaded, isSignedIn } = useAuth();
   const scheme = useColorScheme();
+  // Appearance.setColorScheme("dark");
   const isDark = scheme === "dark";
 
   if (!isLoaded) {

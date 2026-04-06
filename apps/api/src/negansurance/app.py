@@ -50,12 +50,13 @@ def create_app() -> FastAPI:
 
     app.include_router(build_api_router(), prefix=settings.api_prefix)
 
-    @app.get("/", include_in_schema=False)
+    @app.get("/docs", include_in_schema=False)
     async def root() -> dict[str, str]:
         return {
             "service": settings.project_name,
             "version": settings.version,
             "status": "online",
         }
+    
 
     return app

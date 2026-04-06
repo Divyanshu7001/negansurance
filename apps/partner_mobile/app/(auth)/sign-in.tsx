@@ -11,59 +11,29 @@ import {
   View,
 } from "react-native";
 
-function normalizeDigits(input: string) {
-  return input.replace(/\D+/g, "");
-}
-
-function formatE164(countryCode: string, nationalNumber: string) {
-  const cc = countryCode.startsWith("+") ? countryCode : `+${countryCode}`;
-  const nn = normalizeDigits(nationalNumber);
-  return `${cc}${nn}`;
-}
-
-function maskPhone(countryCode: string, nationalNumber: string) {
-  const digits = normalizeDigits(nationalNumber);
-  const last4 = digits.slice(-4).padStart(4, "•");
-  return `${countryCode} (***) ***-${last4}`;
-}
+import { useServerUser } from "@/context/server-user-context";
+import { getUserByEmail } from "@/lib/serverApi";
 
 export default function Page() {
   const { isLoaded: authLoaded, isSignedIn } = useAuth();
-  const { signIn, errors, fetchStatus } = useSignIn();
+  const signInState = useSignIn();
+  const { signIn, errors, fetchStatus } = signInState;
+  const setActive = (signInState as any).setActive as
+    | ((args: { session: string }) => Promise<unknown>)
+    | undefined;
   const router = useRouter();
   const scheme = useColorScheme();
   const isDark = scheme === "dark";
 
-  const [countryCode, setCountryCode] = React.useState("+91");
-  const [phoneNationalNumber, setPhoneNationalNumber] = React.useState("");
+  const { setUser } = useServerUser();
 
-  const [otpDigits, setOtpDigits] = React.useState<string[]>(
-    Array.from({ length: 6 }, () => ""),
-  );
-  const [otpSent, setOtpSent] = React.useState(false);
-  const [resendAvailableAt, setResendAvailableAt] = React.useState<
-    number | null
-  >(null);
-  const [now, setNow] = React.useState(() => Date.now());
+  const [email, setEmail] = React.useState("");
+  const [password, setPassword] = React.useState("");
 
   const [busy, setBusy] = React.useState(false);
   const [formError, setFormError] = React.useState<string | null>(null);
 
   const fieldErrors = (errors as any)?.fields ?? {};
-
-  const identifier = React.useMemo(
-    () => formatE164(countryCode, phoneNationalNumber),
-    [countryCode, phoneNationalNumber],
-  );
-
-  React.useEffect(() => {
-    if (!otpSent || !resendAvailableAt) {
-      return;
-    }
-
-    const id = setInterval(() => setNow(Date.now()), 500);
-    return () => clearInterval(id);
-  }, [otpSent, resendAvailableAt]);
 
   const navigateToHome = (decorateUrl?: (url: string) => unknown) => {
     if (typeof window !== "undefined") {
@@ -76,100 +46,6 @@ export default function Page() {
     router.replace("/home");
   };
 
-  const otpCode = otpDigits.join("");
-  const resendMs = resendAvailableAt ? Math.max(0, resendAvailableAt - now) : 0;
-  const canResend = otpSent && resendMs === 0;
-
-  const clearOtp = () => {
-    setOtpDigits(Array.from({ length: 6 }, () => ""));
-  };
-
-  const setOtpDigit = (index: number, value: string) => {
-    const digit = normalizeDigits(value).slice(-1);
-    setOtpDigits((current) => {
-      const next = current.slice();
-      next[index] = digit;
-      return next;
-    });
-  };
-
-  const sendOtp = async () => {
-    if (!signIn) {
-      return;
-    }
-
-    setFormError(null);
-    setBusy(true);
-    try {
-      const { error: createError } = await signIn.create({ identifier });
-      if (createError) {
-        throw createError;
-      }
-
-      const { error: sendError } = await signIn.phoneCode.sendCode();
-      if (sendError) {
-        throw sendError;
-      }
-
-      clearOtp();
-      setOtpSent(true);
-      setResendAvailableAt(Date.now() + 45_000);
-    } catch (e: any) {
-      const message =
-        typeof e?.message === "string" ? e.message : "Failed to send OTP.";
-      setFormError(message);
-    } finally {
-      setBusy(false);
-    }
-  };
-
-  const verifyOtp = async () => {
-    if (!signIn) {
-      return;
-    }
-
-    setFormError(null);
-    if (otpCode.length !== 6) {
-      setFormError("Enter the 6-digit code.");
-      return;
-    }
-
-    setBusy(true);
-    try {
-      const { error: verifyError } = await signIn.phoneCode.verifyCode({
-        code: otpCode,
-      });
-      if (verifyError) {
-        throw verifyError;
-      }
-
-      if (signIn.status === "complete") {
-        const { error: finalizeError } = await signIn.finalize({
-          navigate: ({ session, decorateUrl }) => {
-            if (session?.currentTask) {
-              console.log(session.currentTask);
-              return;
-            }
-
-            navigateToHome(decorateUrl);
-          },
-        });
-
-        if (finalizeError) {
-          throw finalizeError;
-        }
-      } else {
-        setFormError("Verification not complete yet.");
-      }
-    } catch (e: any) {
-      const message =
-        typeof e?.message === "string" ? e.message : "Invalid code.";
-      setFormError(message);
-    } finally {
-      setBusy(false);
-    }
-  };
-
   if (!authLoaded) {
     return null;
   }
@@ -178,14 +54,59 @@ export default function Page() {
     return null;
   }
 
-  const disableSend =
+  const disableSignIn =
     busy ||
     fetchStatus === "fetching" ||
-    (otpSent && !canResend) ||
-    normalizeDigits(phoneNationalNumber).length < 6;
+    email.trim().length < 3 ||
+    password.length < 1;
 
-  const disableVerify =
-    busy || fetchStatus === "fetching" || otpCode.length !== 6;
+  const signInWithPassword = async () => {
+    if (!signIn) return;
+
+    setFormError(null);
+    if (!email.trim()) {
+      setFormError("Enter your email address.");
+      return;
+    }
+    if (!password) {
+      setFormError("Enter your password.");
+      return;
+    }
+
+    setBusy(true);
+    try {
+      await signIn.create({ identifier: email.trim() });
+
+      const attempt = await (signIn as any).attemptFirstFactor?.({
+        strategy: "password",
+        password,
+      });
+
+      const status = attempt?.status ?? (signIn as any).status;
+      if (status !== "complete") {
+        setFormError("Sign-in is not complete yet.");
+        return;
+      }
+
+      const createdSessionId =
+        attempt?.createdSessionId ?? (signIn as any).createdSessionId;
+
+      if (typeof setActive === "function" && createdSessionId) {
+        await setActive({ session: createdSessionId });
+      }
+
+      const serverUser = await getUserByEmail(email.trim());
+      await setUser(serverUser);
+
+      navigateToHome();
+    } catch (e: any) {
+      const message =
+        typeof e?.message === "string" ? e.message : "Failed to sign in.";
+      setFormError(message);
+    } finally {
+      setBusy(false);
+    }
+  };
 
   return (
     <View className="flex-1 bg-surface">
@@ -230,35 +151,22 @@ export default function Page() {
           <View className="gap-6">
             <View className="gap-2">
               <Text className="ml-1 font-label text-xs font-bold uppercase tracking-widest text-primary">
-                Mobile Number
+                Email Address
               </Text>
-              <View className="flex-row gap-3">
-                <View className="w-20 items-center justify-center rounded-lg bg-surface-container-low px-3 py-4">
-                  <TextInput
-                    value={countryCode}
-                    onChangeText={(v) =>
-                      setCountryCode(v.startsWith("+") ? v : `+${v}`)
-                    }
-                    className="text-center font-label text-on-surface-variant"
-                    placeholder="+91"
-                    placeholderTextColor="#896d95"
-                    keyboardType="phone-pad"
-                  />
-                </View>
-
-                <View className="flex-1 flex-row items-center rounded-lg bg-surface-container-low px-5 py-4">
-                  {!isDark ? (
-                    <MaterialIcons name="phone" size={18} color="#753eb5" />
-                  ) : null}
-                  <TextInput
-                    value={phoneNationalNumber}
-                    onChangeText={setPhoneNationalNumber}
-                    className="ml-3 flex-1 font-body text-lg font-semibold tracking-widest text-on-surface"
-                    placeholder="000 000 0000"
-                    placeholderTextColor="#896d95"
-                    keyboardType="phone-pad"
-                  />
-                </View>
+              <View className="flex-row items-center rounded-lg bg-surface-container-low px-5 py-4">
+                {!isDark ? (
+                  <MaterialIcons name="email" size={18} color="#753eb5" />
+                ) : null}
+                <TextInput
+                  value={email}
+                  onChangeText={setEmail}
+                  className="ml-3 flex-1 font-body text-base font-semibold text-on-surface"
+                  placeholder="you@example.com"
+                  placeholderTextColor="#896d95"
+                  keyboardType="email-address"
+                  autoCapitalize="none"
+                  autoCorrect={false}
+                />
               </View>
 
               {fieldErrors?.identifier?.message ? (
@@ -266,88 +174,49 @@ export default function Page() {
                   {fieldErrors.identifier.message}
                 </Text>
               ) : null}
-              {formError && !otpSent ? (
+            </View>
+
+            <View className="gap-2">
+              <Text className="ml-1 font-label text-xs font-bold uppercase tracking-widest text-primary">
+                Password
+              </Text>
+              <View className="flex-row items-center rounded-lg bg-surface-container-low px-5 py-4">
+                {!isDark ? (
+                  <MaterialIcons name="lock" size={18} color="#753eb5" />
+                ) : null}
+                <TextInput
+                  value={password}
+                  onChangeText={setPassword}
+                  className="ml-3 flex-1 font-body text-base font-semibold text-on-surface"
+                  placeholder="Your password"
+                  placeholderTextColor="#896d95"
+                  secureTextEntry
+                />
+              </View>
+
+              {fieldErrors?.password?.message ? (
+                <Text className="text-sm text-error">
+                  {fieldErrors.password.message}
+                </Text>
+              ) : null}
+
+              {formError ? (
                 <Text className="text-sm text-error">{formError}</Text>
               ) : null}
             </View>
 
             <Pressable
-              onPress={sendOtp}
-              disabled={disableSend}
+              onPress={signInWithPassword}
+              disabled={disableSignIn}
               className={`w-full flex-row items-center justify-center gap-2 rounded-full bg-primary py-5 ${
-                disableSend ? "opacity-50" : ""
+                disableSignIn ? "opacity-50" : ""
               }`}
             >
               <Text className="font-headline text-lg text-on-primary">
-                {otpSent ? (canResend ? "Resend OTP" : "OTP Sent") : "Send OTP"}
+                {busy ? "Signing in…" : "Sign In"}
               </Text>
               <MaterialIcons name="arrow-forward" size={20} color="#faefff" />
             </Pressable>
-
-            {otpSent ? (
-              <View className="mt-10 border-t border-outline-variant/30 pt-10">
-                <View className="items-center">
-                  <Text className="font-headline text-lg font-bold text-on-surface">
-                    {isDark ? "Verify Identity" : "Verify Account"}
-                  </Text>
-                  <Text className="mt-2 font-body text-sm text-on-surface-variant">
-                    {isDark
-                      ? "Enter the 6-digit code sent to your device"
-                      : `Sent to ${maskPhone(countryCode, phoneNationalNumber)}`}
-                  </Text>
-                </View>
-
-                <View className="mt-8 flex-row justify-between gap-2">
-                  {otpDigits.map((d, idx) => (
-                    <View
-                      key={idx}
-                      className="h-14 w-12 items-center justify-center rounded-lg bg-surface-container-lowest"
-                    >
-                      <TextInput
-                        value={d}
-                        onChangeText={(v) => setOtpDigit(idx, v)}
-                        className="text-center font-headline text-xl font-extrabold text-primary"
-                        keyboardType="number-pad"
-                        maxLength={1}
-                        placeholder="-"
-                        placeholderTextColor="#896d95"
-                      />
-                    </View>
-                  ))}
-                </View>
-
-                {formError ? (
-                  <Text className="mt-4 text-sm text-error">{formError}</Text>
-                ) : null}
-
-                <View className="mt-6 items-center">
-                  <Pressable
-                    onPress={sendOtp}
-                    disabled={!canResend || busy || fetchStatus === "fetching"}
-                  >
-                    <Text className="font-label text-xs font-bold uppercase tracking-widest text-primary">
-                      {canResend
-                        ? "Resend code"
-                        : `Resend code in 00:${String(
-                            Math.ceil(resendMs / 1000),
-                          ).padStart(2, "0")}`}
-                    </Text>
-                  </Pressable>
-                </View>
-
-                <Pressable
-                  onPress={verifyOtp}
-                  disabled={disableVerify}
-                  className={`mt-8 w-full flex-row items-center justify-center gap-2 rounded-full bg-primary py-5 ${
-                    disableVerify ? "opacity-50" : ""
-                  }`}
-                >
-                  <Text className="font-headline text-lg text-on-primary">
-                    Confirm Verification
-                  </Text>
-                </Pressable>
-              </View>
-            ) : null}
           </View>
         </View>
 

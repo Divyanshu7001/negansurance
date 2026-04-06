@@ -47,8 +47,8 @@ export default function RegistrationStep1() {
     state.operatingCity.trim().length > 1 &&
     state.partnerPlatformUserId.trim().length > 1 &&
     state.avgDailyDutyHours.trim().length > 0 &&
-    state.avgWeeklyIncome.trim().length > 0 &&
-    state.photoConfirmationChecked;
+    state.avgWeeklyIncome.trim().length > 0;
+  // state.photoConfirmationChecked;
 
   const canContinueDark =
     state.firstName.trim().length > 0 &&
@@ -108,7 +108,7 @@ export default function RegistrationStep1() {
           <DarkPersonalAndWork />
         ) : (
           <LightPersonalAndWork
-            profileUri={state.profilePhotoUri ?? PROFILE_PLACEHOLDER}
+            // profileUri={state.profilePhotoUri ?? PROFILE_PLACEHOLDER}
             fullName={state.fullName}
             onChangeFullName={(v) => setState((s) => ({ ...s, fullName: v }))}
             partnerPlatform={state.partnerPlatform}
@@ -375,7 +375,7 @@ function Field({
 }
 
 function LightPersonalAndWork(props: {
-  profileUri: string;
+  // profileUri: string;
   fullName: string;
   onChangeFullName: (v: string) => void;
   partnerPlatform: PartnerPlatform;
@@ -412,7 +412,7 @@ function LightPersonalAndWork(props: {
               <View className="relative">
                 <View className="h-24 w-24 overflow-hidden rounded-full bg-surface-dim ring-4 ring-surface-container-lowest">
                   <Image
-                    source={{ uri: props.profileUri }}
+                    source={{ uri: PROFILE_PLACEHOLDER }}
                     style={{ width: "100%", height: "100%" }}
                     contentFit="cover"
                   />

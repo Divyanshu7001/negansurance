@@ -6,41 +6,50 @@ import { Pressable, Text, TextInput, View } from "react-native";
 
 import { TermsAndConditionsModal } from "@/components/TermsAndConditionsModal";
 import { useRegistration } from "@/context/registration-context";
+import { useServerUser } from "@/context/server-user-context";
 
-function buildUnsafeMetadata(
+import { registerUser, type UserRegisterRequest } from "@/lib/serverApi";
+
+function toInt(value: string) {
+  const n = Number.parseInt(value.trim(), 10);
+  return Number.isFinite(n) ? n : 0;
+}
+
+function buildRegisterRequest(
   state: ReturnType<typeof useRegistration>["state"],
-) {
+  phoneE164: string,
+): UserRegisterRequest {
+  const fullNameFromParts = `${state.firstName} ${state.lastName}`.trim();
+  const fullName = (state.fullName || fullNameFromParts).trim();
   return {
-    registration: {
-      fullName: state.fullName,
-      operatingCity: state.operatingCity,
-      partnerPlatform: state.partnerPlatform,
-      partnerPlatformUserId: state.partnerPlatformUserId,
-      avgDailyDutyHours: state.avgDailyDutyHours,
-      avgWeeklyIncome: state.avgWeeklyIncome,
-      firstName: state.firstName,
-      lastName: state.lastName,
-      emailAddress: state.emailAddress,
-      phone: {
-        countryCode: state.countryCode,
-        nationalNumber: state.phoneNationalNumber,
-      },
-    },
+    full_name: fullName,
+    email: state.emailAddress.trim(),
+    phone_number: phoneE164,
+    operating_city: state.operatingCity.trim(),
+    average_duty_hours_per_week: toInt(state.avgDailyDutyHours),
+    average_weekly_earnings: toInt(state.avgWeeklyIncome),
+    partner_name: state.partnerPlatform,
+    partner_platform_id: state.partnerPlatformUserId.trim(),
+    is_kyc_verified: true,
   };
 }
 
 export default function AccountSetupPage() {
-  const { signUp, errors, fetchStatus } = useSignUp();
+  const signUpState = useSignUp();
+  const { signUp, errors, fetchStatus } = signUpState;
   const router = useRouter();
   const { state, setState, phoneE164 } = useRegistration();
+  const { setUser } = useServerUser();
 
   const [termsOpen, setTermsOpen] = React.useState(false);
 
-  const getResultError = (result: unknown) => {
-    if (!result || typeof result !== "object") return null;
-    if (!("error" in result)) return null;
-    return (result as any).error ?? null;
-  };
+  React.useEffect(() => {
+    const load = async () => {
+      if (!signUp) return;
+    };
+
+    load();
+  }, [signUp]);
 
   const getErrorMessage = (e: unknown, fallback: string) => {
     const anyErr = e as any;
@@ -62,17 +71,6 @@ export default function AccountSetupPage() {
 
   const fieldErrors = (errors as any)?.fields ?? {};
 
-  const navigateToHome = (decorateUrl: (url: string) => string) => {
-    const url = decorateUrl("/home");
-    if (url.startsWith("http")) {
-      if (typeof window !== "undefined") {
-        window.location.href = url;
-      }
-    } else {
-      router.push(url as Href);
-    }
-  };
-
   const canSubmit =
     state.password.length >= 8 &&
     state.password === state.confirmPassword &&
@@ -80,6 +78,11 @@ export default function AccountSetupPage() {
 
   const handleFinish = async () => {
     setFormError(null);
+
+    if (!state.phoneNationalNumber.trim()) {
+      setFormError("Mobile number is required.");
+      return;
+    }
 
     if (state.password !== state.confirmPassword) {
       setFormError("Passwords do not match.");
@@ -93,50 +96,62 @@ export default function AccountSetupPage() {
 
     setBusy(true);
     try {
-      await signUp.update({
-        unsafeMetadata: buildUnsafeMetadata(state),
-        legalAccepted: true,
-      });
-      console.log("Are we even here?");
-      //console.log(updateResult);
-
-      // const updateError = getResultError(updateResult);
-      // if (updateError) throw updateError;
-      console.log("before password result");
-
-      const passwordResult = await signUp.password({
+      // First update legal acceptance (kept separate for older SDKs), then set password.
+      await signUp.update({ legalAccepted: true });
+      const { error } = await signUp.password({
         password: state.password,
-        phoneNumber: signUp.phoneNumber ?? phoneE164,
-        emailAddress: state.emailAddress || undefined,
-        firstName: state.firstName || undefined,
-        lastName: state.lastName || undefined,
       });
-      console.log(passwordResult);
 
-      console.log("After signup password setting");
+      if (error) {
+        throw new Error("Failed to set password: " + error.message);
+      }
 
-      const passwordError = getResultError(passwordResult);
-      if (passwordError) throw passwordError;
+      const anySignUp = signUp as any;
+      // console.log({
+      //   status: anySignUp?.status,
+      //   requiredFields: anySignUp?.requiredFields,
+      //   missingFields: anySignUp?.missingFields,
+      //   // verifications: anySignUp?.verifications,
+      // });
+      //console.log("after any sign");
+      //console.log(anySignUp?.status);
 
-      if (signUp.status === "complete") {
-        const finalizeResult = await signUp.finalize({
+      if (anySignUp?.status === "abandoned") {
+        throw new Error("Signup session expired. Please restart.");
+      }
+      //console.log("just before complete");
+      
+      if (anySignUp?.status === "complete") {
+        // Navigate only after Clerk + server registration succeed.
+        //console.log("Inside complete");
+        
+        const registerReq = buildRegisterRequest(state, phoneE164);
+        const createdUser = await registerUser(registerReq);
+        if (!createdUser || !createdUser.id) {
+          setFormError("Failed to create user on server.");
+          throw new Error("Failed to create user on server.");
+        }
+        setUser(createdUser);
+
+        await signUp.finalize({
+          // Redirect the user to the home page after signing up
           navigate: ({ session, decorateUrl }) => {
+            // Handle session tasks
+            // See https://clerk.com/docs/guides/development/custom-flows/authentication/session-tasks
             if (session?.currentTask) {
-              console.log(session.currentTask);
+              console.log(session?.currentTask);
               return;
             }
 
-            navigateToHome(decorateUrl);
+            // If no session tasks, navigate the signed-in user to the home page
+            const url = decorateUrl("/home");
+            if (url.startsWith("http")) {
+              window.location.href = url;
+            } else {
+              router.replace(url as Href);
+            }
           },
         });
-        console.log("Here before finalizing");
-
-        const finalizeError = getResultError(finalizeResult);
-        if (finalizeError) throw finalizeError;
-      } else {
-        setFormError(
-          "Sign-up is not complete yet. Please review your details.",
-        );
       }
     } catch (e: any) {
       console.log("Error in completing sign up: ", e);

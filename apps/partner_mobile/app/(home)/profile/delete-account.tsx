@@ -1,20 +1,23 @@
-import { useClerk, useUser } from "@clerk/expo";
+import { useClerk } from "@clerk/expo";
 import { MaterialIcons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import { useMemo, useState } from "react";
 import {
-    Alert,
-    Pressable,
-    ScrollView,
-    Text,
-    TextInput,
-    useColorScheme,
-    View,
+  Alert,
+  Pressable,
+  ScrollView,
+  Text,
+  TextInput,
+  useColorScheme,
+  View,
 } from "react-native";
 import {
-    SafeAreaView,
-    useSafeAreaInsets,
+  SafeAreaView,
+  useSafeAreaInsets,
 } from "react-native-safe-area-context";
+
+import { useServerUser } from "@/context/server-user-context";
+import { deleteUser } from "@/lib/serverApi";
 
 type ThemeTokens = {
   primary: string;
@@ -59,13 +62,10 @@ export default function DeleteAccountScreen() {
   const isDark = scheme === "dark";
   const colors = isDark ? DARK : LIGHT;
 
-  const { user } = useUser();
+  const { user, clear } = useServerUser();
   const clerk = useClerk();
 
-  const email = useMemo(
-    () => user?.primaryEmailAddress?.emailAddress ?? "",
-    [user?.primaryEmailAddress?.emailAddress],
-  );
+  const email = useMemo(() => user?.email ?? "", [user?.email]);
 
   const [confirm, setConfirm] = useState("");
   const [busy, setBusy] = useState(false);
@@ -89,14 +89,8 @@ export default function DeleteAccountScreen() {
           onPress: async () => {
             setBusy(true);
             try {
-              const anyUser = user as any;
-              if (typeof anyUser?.delete === "function") {
-                await anyUser.delete();
-              } else {
-                throw new Error(
-                  "Account deletion is not supported by this Clerk SDK version.",
-                );
-              }
+              await deleteUser(user.id);
+              await clear();
 
               try {
                 await (clerk as any).signOut?.();

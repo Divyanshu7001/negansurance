@@ -6,28 +6,6 @@ import { Pressable, Text, TextInput, View } from "react-native";
 
 import { useRegistration } from "@/context/registration-context";
 
-function buildUnsafeMetadata(
-  state: ReturnType<typeof useRegistration>["state"],
-) {
-  return {
-    registration: {
-      fullName: state.fullName,
-      operatingCity: state.operatingCity,
-      partnerPlatform: state.partnerPlatform,
-      partnerPlatformUserId: state.partnerPlatformUserId,
-      avgDailyDutyHours: state.avgDailyDutyHours,
-      avgWeeklyIncome: state.avgWeeklyIncome,
-      firstName: state.firstName,
-      lastName: state.lastName,
-      emailAddress: state.emailAddress,
-      phone: {
-        countryCode: state.countryCode,
-        nationalNumber: state.phoneNationalNumber,
-      },
-    },
-  };
-}
-
 function emptyOtpDigits() {
   return Array.from({ length: 6 }, () => "");
 }
@@ -35,7 +13,7 @@ function emptyOtpDigits() {
 export default function VerifyEmailPage() {
   const { signUp, errors, fetchStatus } = useSignUp();
   const router = useRouter();
-  const { state, setState, phoneE164, setOtpDigit } = useRegistration();
+  const { state, setState, setOtpDigit } = useRegistration();
 
   const getResultError = (result: unknown) => {
     if (!result || typeof result !== "object") return null;
@@ -94,22 +72,11 @@ export default function VerifyEmailPage() {
   const canResend = state.otpSent && resendMs === 0;
 
   const ensureSignUpInitialized = async () => {
-    const params = {
-      phoneNumber: phoneE164,
-      emailAddress: state.emailAddress || undefined,
-      firstName: state.firstName || undefined,
-      lastName: state.lastName || undefined,
-      unsafeMetadata: buildUnsafeMetadata(state),
-    };
-    console.log(params);
-    console.log(signUp);
-    
+    console.log(signUp.id);
     if (!signUp.id) {
-      console.log("Creating new signup");
-      await signUp.create(params);
-    } else {
-      console.log("Signup already exists, skipping create");
-      // ❌ DO NOT call signUp.create again
+      await signUp.create({
+        emailAddress: state.emailAddress,
+      });
     }
   };
 
@@ -117,41 +84,17 @@ export default function VerifyEmailPage() {
     // Prefer the newer verifications API, but fall back to classic methods.
     const anySignUp = signUp as any;
     const verifications = anySignUp?.verifications;
+    //console.log("sendEmailCodeCompat: verifications: ", state.emailAddress);
 
-    if (typeof verifications?.sendEmailCode === "function") {
-      try {
-        return await verifications.sendEmailCode();
-      } catch (error) {
-        console.error("Error sending email code:", error);
-        throw error;
-      }
+    try {
+      //console.log("Before sending code");
+      const { error } = await verifications.sendEmailCode();
+      if (error) console.log("After sending code, error: ", error);
+      return;
+    } catch (error) {
+      console.error("Error sending email code:", error);
+      throw error;
     }
-
-    if (typeof verifications?.prepareEmailAddressVerification === "function") {
-      try {
-        return await verifications.prepareEmailAddressVerification({
-          strategy: "email_code",
-        } as any);
-      } catch (error) {
-        console.error("Error preparing email address verification:", error);
-        throw error;
-      }
-    }
-
-    if (typeof anySignUp?.prepareEmailAddressVerification === "function") {
-      try {
-        return await anySignUp.prepareEmailAddressVerification({
-          strategy: "email_code",
-        } as any);
-      } catch (error) {
-        console.error("Error preparing email address verification:", error);
-        throw error;
-      }
-    }
-
-    throw new Error(
-      "Email verification is not supported by this Clerk SDK version.",
-    );
   };
 
   const verifyEmailCodeCompat = async (code: string) => {
@@ -160,16 +103,6 @@ export default function VerifyEmailPage() {
 
     if (typeof verifications?.verifyEmailCode === "function") {
       return await verifications.verifyEmailCode({ code });
-    }
-
-    if (typeof verifications?.attemptEmailAddressVerification === "function") {
-      return await verifications.attemptEmailAddressVerification({
-        code,
-      } as any);
-    }
-
-    if (typeof anySignUp?.attemptEmailAddressVerification === "function") {
-      return await anySignUp.attemptEmailAddressVerification({ code } as any);
     }
 
     throw new Error(
@@ -193,11 +126,11 @@ export default function VerifyEmailPage() {
     setBusy(true);
     try {
       await ensureSignUpInitialized();
-      console.log("after ensuring");
-      
+      //console.log("after ensuring");
+
       const result = await sendEmailCodeCompat();
       //console.log("Result after sending: ",result);
-      
+
       const err = getResultError(result);
       if (err) throw err;
 
@@ -236,6 +169,14 @@ export default function VerifyEmailPage() {
     }
   };
 
+  const anySignUp = signUp as any;
+  const emailStatus = anySignUp?.verifications?.emailAddress?.status;
+  // "verified" / "complete" depending on SDK version
+  if (emailStatus === "verified" || emailStatus === "complete") {
+    router.replace("/sign-up/account-setup");
+    return;
+  }
+
   return (
     <View className="flex-1 bg-surface px-6 pt-16">
       <View className="mb-8 flex-row items-center justify-between">
@@ -251,14 +192,7 @@ export default function VerifyEmailPage() {
           </Text>
         </View>
 
-        <Pressable
-          onPress={() => router.push("/sign-up/verify-phone" as Href)}
-          className="rounded-full px-3 py-2"
-        >
-          <Text className="text-xs font-semibold uppercase tracking-widest text-primary">
-            Verify with mobile
-          </Text>
-        </Pressable>
+        <View />
       </View>
 
       <View className="mb-6">
