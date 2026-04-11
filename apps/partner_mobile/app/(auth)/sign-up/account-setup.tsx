@@ -2,13 +2,18 @@ import { useSignUp } from "@clerk/expo";
 import { MaterialIcons } from "@expo/vector-icons";
 import { type Href, useRouter } from "expo-router";
 import React from "react";
-import { Pressable, Text, TextInput, View } from "react-native";
+import { Pressable, Text, TextInput, useColorScheme, View } from "react-native";
 
 import { TermsAndConditionsModal } from "@/components/TermsAndConditionsModal";
 import { useRegistration } from "@/context/registration-context";
 import { useServerUser } from "@/context/server-user-context";
 
 import { registerUser, type UserRegisterRequest } from "@/lib/serverApi";
+
+const LIGHT_PRIMARY = "#753eb5";
+const DARK_PRIMARY = "#c799ff";
+const LIGHT_ON_PRIMARY = "#faefff";
+const LIGHT_PLACEHOLDER = "#896d95";
 
 function toInt(value: string) {
   const n = Number.parseInt(value.trim(), 10);
@@ -40,6 +45,10 @@ export default function AccountSetupPage() {
   const router = useRouter();
   const { state, setState, phoneE164 } = useRegistration();
   const { setUser } = useServerUser();
+  const scheme = useColorScheme();
+  const isDark = scheme === "dark";
+  const primary = isDark ? DARK_PRIMARY : LIGHT_PRIMARY;
+  const placeholderTextColor = isDark ? undefined : LIGHT_PLACEHOLDER;
 
   const [termsOpen, setTermsOpen] = React.useState(false);
 
@@ -169,7 +178,7 @@ export default function AccountSetupPage() {
           onPress={() => router.back()}
           className="h-10 w-10 items-center justify-center rounded-full"
         >
-          <MaterialIcons name="arrow-back" size={22} color="#753eb5" />
+          <MaterialIcons name="arrow-back" size={22} color={primary} />
         </Pressable>
         <Text className="font-headline text-xl tracking-tight text-primary">
           Account Setup
@@ -206,7 +215,7 @@ export default function AccountSetupPage() {
             onChangeText={(v) => setState((s) => ({ ...s, password: v }))}
             className="font-body text-on-surface"
             placeholder="Password (min 8 chars)"
-            placeholderTextColor="#896d95"
+            placeholderTextColor={placeholderTextColor}
             secureTextEntry
           />
         </View>
@@ -224,7 +233,7 @@ export default function AccountSetupPage() {
             }
             className="font-body text-on-surface"
             placeholder="Confirm password"
-            placeholderTextColor="#896d95"
+            placeholderTextColor={placeholderTextColor}
             secureTextEntry
           />
         </View>
@@ -276,7 +285,7 @@ export default function AccountSetupPage() {
             !canSubmit || busy || fetchStatus === "fetching" ? "opacity-50" : ""
           }`}
         >
-          <MaterialIcons name="check-circle" size={20} color="#faefff" />
+          <MaterialIcons name="check-circle" size={20} color={LIGHT_ON_PRIMARY} />
           <Text className="font-headline text-lg text-on-primary">
             Create Account
           </Text>

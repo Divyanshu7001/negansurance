@@ -2,9 +2,14 @@ import { useSignUp } from "@clerk/expo";
 import { MaterialIcons } from "@expo/vector-icons";
 import { type Href, useRouter } from "expo-router";
 import React from "react";
-import { Pressable, Text, TextInput, View } from "react-native";
+import { Pressable, Text, TextInput, useColorScheme, View } from "react-native";
 
 import { useRegistration } from "@/context/registration-context";
+
+const LIGHT_PRIMARY = "#753eb5";
+const DARK_PRIMARY = "#c799ff";
+const LIGHT_ON_PRIMARY = "#faefff";
+const LIGHT_PLACEHOLDER = "#896d95";
 
 function buildUnsafeMetadata(
   state: ReturnType<typeof useRegistration>["state"],
@@ -33,6 +38,10 @@ export default function VerifyPhonePage() {
   const router = useRouter();
   const { state, setState, phoneE164, setOtpDigit, clearOtp } =
     useRegistration();
+  const scheme = useColorScheme();
+  const isDark = scheme === "dark";
+  const primary = isDark ? DARK_PRIMARY : LIGHT_PRIMARY;
+  const placeholderTextColor = isDark ? undefined : LIGHT_PLACEHOLDER;
 
   const getResultError = (result: unknown) => {
     if (!result || typeof result !== "object") return null;
@@ -175,7 +184,7 @@ export default function VerifyPhonePage() {
           onPress={() => router.back()}
           className="h-10 w-10 items-center justify-center rounded-full"
         >
-          <MaterialIcons name="arrow-back" size={22} color="#753eb5" />
+          <MaterialIcons name="arrow-back" size={22} color={primary} />
         </Pressable>
         <Text className="font-headline text-xl tracking-tight text-primary">
           Mobile Verification
@@ -216,7 +225,7 @@ export default function VerifyPhonePage() {
             onChangeText={(v) => setState((s) => ({ ...s, emailAddress: v }))}
             className="font-body text-on-surface"
             placeholder="Email address"
-            placeholderTextColor="#896d95"
+            placeholderTextColor={placeholderTextColor}
             keyboardType="email-address"
             autoCapitalize="none"
             autoCorrect={false}
@@ -241,7 +250,7 @@ export default function VerifyPhonePage() {
               }
               className="font-body text-on-surface"
               placeholder="+91"
-              placeholderTextColor="#896d95"
+              placeholderTextColor={placeholderTextColor}
               keyboardType="phone-pad"
             />
           </View>
@@ -253,7 +262,7 @@ export default function VerifyPhonePage() {
               }
               className="font-body text-on-surface"
               placeholder="Phone number"
-              placeholderTextColor="#896d95"
+              placeholderTextColor={placeholderTextColor}
               keyboardType="phone-pad"
             />
           </View>
@@ -276,7 +285,7 @@ export default function VerifyPhonePage() {
               : ""
           }`}
         >
-          <MaterialIcons name="sms" size={18} color="#faefff" />
+          <MaterialIcons name="sms" size={18} color={LIGHT_ON_PRIMARY} />
           <Text className="font-headline text-lg text-on-primary">
             {state.otpSent
               ? canResend
@@ -312,7 +321,7 @@ export default function VerifyPhonePage() {
                   keyboardType="number-pad"
                   maxLength={1}
                   placeholder="•"
-                  placeholderTextColor="#896d95"
+                  placeholderTextColor={placeholderTextColor}
                 />
               </View>
             ))}
@@ -335,7 +344,7 @@ export default function VerifyPhonePage() {
               busy || fetchStatus === "fetching" ? "opacity-50" : ""
             }`}
           >
-            <MaterialIcons name="verified" size={20} color="#faefff" />
+            <MaterialIcons name="verified" size={20} color={LIGHT_ON_PRIMARY} />
             <Text className="font-headline text-lg text-on-primary">
               Verify & Continue
             </Text>

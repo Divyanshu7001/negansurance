@@ -4,21 +4,20 @@ import { BlurView } from "expo-blur";
 import { Image } from "expo-image";
 import { LinearGradient } from "expo-linear-gradient";
 import { type Href, Link, Redirect } from "expo-router";
-import React from "react";
 import {
+  Appearance,
   ImageBackground,
   Pressable,
   Text,
   useColorScheme,
   View,
-  Appearance,
 } from "react-native";
 
 const LIGHT_BG_URI =
-  "https://lh3.googleusercontent.com/aida-public/AB6AXuAWQJLmVlBJw5h0Y9rWFz-PUTJXiuZcHmDoK_NGpSpvmEnGv9tyWjeOQJT641IxOM87W4XcmA0jNYh2my6hXwSGmZJuiCLJtloDkZMYzATQ554bUEg9Sm49Nt6TBw643mAOYo-GQ_2LT5Pwhl8V_JqXc1AJ-yqQiptKgKuKz0OktSEQuH15ghsOE2tzxR9a2BFBQYJUXA-tas2o9SMQPo7lptTjWgL_8W5f2wZWsEiWl3fuZWvGd9i_U3TbiJIJoQjd3MxNcOnImAmt";
+  "https://lh3.googleusercontent.com/aida-public/AB6AXuDS1NqTtV1slsTEe1jx7RLf2CSgwwXclifOer2_H15j8bD6ncdfPoDb3Z9T36rqE6LaAEd46AixQLDgZMNRc7XZKWbFeBmPIiHkQwmcLjAqmYzZwdJ57y0xHRXBaRGYGbyN7DIxji84__m-1aTs3JAyx3dNQJRkLaP-b247uj65ALzj8wMaO-L6S486NhCL8hcnRvn0p09Gybn3-ma3gCgpEBEFp45JcA12V-xo1VYA96M6p2tU-zOG9BGJKxZJjtlv6bv7EqMZIqRX";
 
 const DARK_BG_URI =
-  "https://lh3.googleusercontent.com/aida-public/AB6AXuDS1NqTtV1slsTEe1jx7RLf2CSgwwXclifOer2_H15j8bD6ncdfPoDb3Z9T36rqE6LaAEd46AixQLDgZMNRc7XZKWbFeBmPIiHkQwmcLjAqmYzZwdJ57y0xHRXBaRGYGbyN7DIxji84__m-1aTs3JAyx3dNQJRkLaP-b247uj65ALzj8wMaO-L6S486NhCL8hcnRvn0p09Gybn3-ma3gCgpEBEFp45JcA12V-xo1VYA96M6p2tU-zOG9BGJKxZJjtlv6bv7EqMZIqRX";
+  "https://lh3.googleusercontent.com/aida-public/AB6AXuAWQJLmVlBJw5h0Y9rWFz-PUTJXiuZcHmDoK_NGpSpvmEnGv9tyWjeOQJT641IxOM87W4XcmA0jNYh2my6hXwSGmZJuiCLJtloDkZMYzATQ554bUEg9Sm49Nt6TBw643mAOYo-GQ_2LT5Pwhl8V_JqXc1AJ-yqQiptKgKuKz0OktSEQuH15ghsOE2tzxR9a2BFBQYJUXA-tas2o9SMQPo7lptTjWgL_8W5f2wZWsEiWl3fuZWvGd9i_U3TbiJIJoQjd3MxNcOnImAmt";
 
 const AVATAR_1 =
   "https://lh3.googleusercontent.com/aida-public/AB6AXuDlDvZA-iC_rMPFHsGahKPr68U2y795JSNM8ffbGajDGrW9rWpxd-Ufc-gpuU3dRBzjNbChhp0cmmEXFBiGeXsxVAbh8VsOeBbn5cbbSgarf0SIFZx6T-zucO51q_6zbqmvE-kPXfLaMFHexrH-4yQvXsJdWzWLoFMFtIoALUQ6CZ7Q2AY75J8gshTIGgxkl68M-6I30-E-A5jCNmRhW0EUXMlmhqzCA0xwZ8sCSLTfmh_3NjLg7f_16lGdvf9boTUNIHwP2XDLyMYn";
@@ -42,7 +41,7 @@ export default function IndexPage() {
   }
 
   return (
-    <View className="flex-1 bg-surface" >
+    <View className="flex-1 bg-surface">
       {isDark ? <DarkWelcome /> : <LightWelcome />}
     </View>
   );
@@ -56,7 +55,7 @@ function LightWelcome() {
       className="flex-1"
     >
       <LinearGradient
-        colors={["rgba(26,4,38,0.40)", "rgba(26,4,38,0.95)"]}
+        colors={["rgba(26,4,38,0.10)", "rgba(26,4,38,0.35)"]}
         start={{ x: 0.5, y: 0 }}
         end={{ x: 0.5, y: 1 }}
         style={{ position: "absolute", left: 0, right: 0, top: 0, bottom: 0 }}
